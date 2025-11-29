@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="View.DetailsLivrePage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="10">
+
+            <Label Text="{Binding LivreSelectionne.Titre}"
+                   FontSize="24"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center" />
+
+            <Label Text="{Binding LivreSelectionne.Auteur}" />
+            <Label Text="{Binding LivreSelectionne.ISBN}" />
+            <Label Text="{Binding LivreSelectionne.MaisonEdition}" />
+            <Label Text="{Binding LivreSelectionne.DatePublication}" />
+
+            <Label Text="Résumé :" FontAttributes="Bold" />
+            <Label Text="{Binding LivreSelectionne.Description}" />
+
+            <Label Text="{Binding Moyenne, StringFormat='Moyenne actuelle : {0:F1}/5'}" />
+            <Label Text="{Binding Moyenne}" />
+            <Label Text="{Binding NombreEvaluations}" />
+
+
+            <Label Text="Votre note :" FontAttributes="Bold" />
+
+            <!-- Tu peux aussi mettre un Slider ici si tu préfères -->
+            <Stepper Minimum="0"
+                     Maximum="5"
+                     Increment="1"
+                     Value="{Binding NoteUtilisateur}" />
+
+            <Label Text="{Binding NoteUtilisateur, StringFormat='Note choisie : {0:F0}/5'}" />
+
+            <Label Text="{Binding Message}"
+                   TextColor="Red" />
+
+            <Button Text="Enregistrer l’évaluation"
+                    Command="{Binding SauvegarderEvaluationCommand}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="View.AdminSuppressionLivrePage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <VerticalStackLayout Padding="20" Spacing="10">
+        <Label Text="Supprimer un livre"
+               FontSize="24"
+               FontAttributes="Bold"
+               HorizontalOptions="Center" />
+
+        <Entry Placeholder="ISBN à rechercher"
+               Text="{Binding IsbnRecherche}" />
+
+        <Button Text="Rechercher"
+                Command="{Binding RechercherCommand}" />
+
+        <Label Text="{Binding Message}"
+               TextColor="Red" />
+
+        <CollectionView ItemsSource="{Binding ResultatsRecherche}"
+                        SelectionMode="Single"
+                        SelectedItem="{Binding LivreSelectionne}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Frame Margin="5"
+                           Padding="10"
+                           HasShadow="True"
+                           CornerRadius="8">
+                        <VerticalStackLayout Spacing="3">
+                            <Label Text="{Binding Titre}"
+                                   FontAttributes="Bold" />
+                            <Label Text="{Binding Auteur}" />
+                            <Label Text="{Binding ISBN}"
+                                   FontSize="12" />
+                        </VerticalStackLayout>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Button Text="Supprimer le livre sélectionné"
+                Command="{Binding SupprimerSelectionCommand}" />
+    </VerticalStackLayout>
+</ContentPage>

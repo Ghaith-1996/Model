@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="View.AdminAjoutLivrePage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="10">
+
+            <Label Text="Ajouter un livre"
+                   FontSize="24"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center" />
+
+            <Entry Placeholder="Titre" Text="{Binding Titre}" />
+            <Entry Placeholder="Auteur(s)" Text="{Binding Auteur}" />
+            <Entry Placeholder="ISBN" Text="{Binding ISBN}" />
+            <Entry Placeholder="Maison d’édition" Text="{Binding MaisonEdition}" />
+            <Entry Placeholder="Date de publication" Text="{Binding DatePublication}" />
+            <Editor Placeholder="Description / résumé"
+                    HeightRequest="100"
+                    Text="{Binding Description}" />
+
+            <Label Text="{Binding Message}"
+                   TextColor="Red" />
+
+            <Button Text="Ajouter"
+                    Command="{Binding AjouterLivreCommand}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
