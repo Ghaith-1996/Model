@@ -1,8 +1,5 @@
 ﻿namespace Bibliotheque.Model
-{
-    /// <summary>
-    /// Représente un compte utilisateur (client ou administrateur).
-    /// </summary>
+{ 
     public class Compte
     {
         public string Email { get; set; } = string.Empty;
@@ -10,11 +7,9 @@
         public string Nom { get; set; } = string.Empty;
         public string Prenom { get; set; } = string.Empty;
 
-        /// <summary>
-        /// Indique si ce compte est un administrateur.
-        /// Dans le XML, on pourra décider que l’admin a un mot de passe
-        /// et/ou un email spécial (admin@exemple.com).
-        /// </summary>
+      
+        // Indique si ce compte est un administrateur.
+      
         public bool EstAdministrateur { get; set; }
 
         public Compte()

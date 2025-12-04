@@ -21,8 +21,8 @@ namespace Bibliotheque.Services
 
             email = email.Trim();
 
-            // Cas spécial admin
-            if (email.Equals("admin@exemple.com", StringComparison.OrdinalIgnoreCase)
+            
+            if (email.Equals("admin@exemple.com")
                 && motDePasse == "420-3GP")
             {
                 return new Compte("admin@exemple.com", "Administrateur", "Principal", estAdministrateur: true)
@@ -31,15 +31,16 @@ namespace Bibliotheque.Services
                 };
             }
 
+            //trouver le compte
             var comptes = _xmlService.ChargerComptes();
 
             var compte = comptes.FirstOrDefault(c =>
-                c.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
+                c.Email.Equals(email));
 
             if (compte == null)
                 return null;
 
-            // Compte sans mot de passe dans le XML → connexion juste avec le courriel
+            // connexion juste avec le courriel
             if (string.IsNullOrWhiteSpace(compte.MotDePasse))
                 return compte;
 
