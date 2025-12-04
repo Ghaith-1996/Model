@@ -1,23 +1,17 @@
 ﻿namespace Bibliotheque.Model
-{
-    /// <summary>
-    /// Représente l’évaluation d’un livre par un utilisateur.
-    /// </summary>
+{  
+
     public class Evaluation
     {
-        /// <summary>
-        /// Email du client qui a évalué le livre.
-        /// </summary>
+      
+        // Email du client 
         public string EmailClient { get; set; } = string.Empty;
 
-        /// <summary>
-        /// ISBN du livre évalué.
-        /// </summary>
+        // ISBN du livr
         public string IsbnLivre { get; set; } = string.Empty;
 
-        /// <summary>
-        /// Note donnée par l’utilisateur (sur 5).
-        /// </summary>
+        // Note donnée par l’utilisateur.
+
         public double Note { get; set; }
 
         public Evaluation()

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Xml.Linq;
+using System.Linq; 
+using System.Xml;   
 
 namespace Bibliotheque.Services
 {
@@ -15,64 +15,124 @@ namespace Bibliotheque.Services
             _cheminFichier = cheminFichier;
         }
 
-        private XDocument ChargerOuCreerDocument()
+        
+        private XmlDocument ChargerOuCreerDocument()
         {
-            if (File.Exists(_cheminFichier))
-                return XDocument.Load(_cheminFichier);
+            var doc = new XmlDocument();
 
-            var doc = new XDocument(new XElement("Favoris"));
+            if (File.Exists(_cheminFichier))
+            {
+                try
+                {
+                    doc.Load(_cheminFichier);
+                    // Vérifier la racine, sinon on recrée
+                    if (doc.DocumentElement == null || doc.DocumentElement.Name != "Favori")
+                    {
+                        return CreerNouveauDocument();
+                    }
+                    return doc;
+                }
+                catch
+                {
+                    
+                    return CreerNouveauDocument();
+                }
+            }
+
+            return CreerNouveauDocument();
+        }
+
+        private XmlDocument CreerNouveauDocument()
+        {
+            var doc = new XmlDocument();
+            
+            XmlDeclaration declaration = doc.CreateXmlDeclaration("1.0", "utf-8", null);
+            doc.AppendChild(declaration);
+
+          
+            XmlElement racine = doc.CreateElement("Favoris");
+            doc.AppendChild(racine);
+
             doc.Save(_cheminFichier);
             return doc;
         }
 
-        /// <summary>
-        /// Ajoute ou supprime un favori pour un client.
-        /// estFavori = true → ajouter ; false → retirer.
-        /// </summary>
         public void AjouterOuMettreAJourFavori(string emailClient, string isbnLivre, bool estFavori)
         {
             var doc = ChargerOuCreerDocument();
-            var racine = doc.Root!;
+            var racine = doc.DocumentElement;
+            if (racine == null) return;
 
-            var existant = racine.Elements("Favori")
-                .FirstOrDefault(e =>
-                    string.Equals((string?)e.Element("EmailClient"), emailClient,
-                        StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals((string?)e.Element("IsbnLivre"), isbnLivre,
-                        StringComparison.OrdinalIgnoreCase));
+            // On cherche si le favori existe déjà
+            // Avec XmlDocument, on doit itérer manuellement ou utiliser XPath
+            XmlElement? favoriExistant = null;
+
+            foreach (XmlElement noeud in racine.GetElementsByTagName("Favoris"))
+            {
+                string? email = noeud["EmailClient"]?.InnerText;
+                string? isbn = noeud["IsbnLivre"]?.InnerText;
+
+                if (string.Equals(email, emailClient, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(isbn, isbnLivre, StringComparison.OrdinalIgnoreCase))
+                {
+                    favoriExistant = noeud;
+                    break;
+                }
+            }
 
             if (estFavori)
             {
-                if (existant == null)
+                // On veut ajouter, seulement si ça n'existe pas déjà
+                if (favoriExistant == null)
                 {
-                    racine.Add(new XElement("Favori",
-                        new XElement("EmailClient", emailClient),
-                        new XElement("IsbnLivre", isbnLivre)));
+                    XmlElement nouveauFavori = doc.CreateElement("Favori");
+
+                    XmlElement elEmail = doc.CreateElement("EmailClient");
+                    elEmail.InnerText = emailClient;
+                    nouveauFavori.AppendChild(elEmail);
+
+                    XmlElement elIsbn = doc.CreateElement("IsbnLivre");
+                    elIsbn.InnerText = isbnLivre;
+                    nouveauFavori.AppendChild(elIsbn);
+
+                    racine.AppendChild(nouveauFavori);
                 }
             }
             else
             {
-                existant?.Remove();
+                // On veut supprimer
+                if (favoriExistant != null)
+                {
+                    racine.RemoveChild(favoriExistant);
+                }
             }
 
             doc.Save(_cheminFichier);
         }
 
-        /// <summary>
-        /// Retourne les ISBN favoris d'un client.
-        /// </summary>
+        //isbn du livre favori
         public List<string> ChargerIsbnsFavorisPourClient(string emailClient)
         {
+            var resultats = new List<string>();
             var doc = ChargerOuCreerDocument();
-            var racine = doc.Root!;
+            var racine = doc.DocumentElement;
+            if (racine == null) return resultats;
 
-            return racine.Elements("Favori")
-                .Where(e =>
-                    string.Equals((string?)e.Element("EmailClient"), emailClient,
-                        StringComparison.OrdinalIgnoreCase))
-                .Select(e => (string?)e.Element("IsbnLivre") ?? string.Empty)
-                .Where(isbn => !string.IsNullOrWhiteSpace(isbn))
-                .ToList();
+            foreach (XmlElement noeud in racine.GetElementsByTagName("Favori"))
+            {
+                string? email = noeud["EmailClient"]?.InnerText;
+
+                if (string.Equals(email, emailClient, StringComparison.OrdinalIgnoreCase))
+                {
+                    string? isbn = noeud["IsbnLivre"]?.InnerText;
+                    if (!string.IsNullOrWhiteSpace(isbn))
+                    {
+                        resultats.Add(isbn);
+                    }
+                }
+            }
+
+            return resultats;
         }
     }
 }

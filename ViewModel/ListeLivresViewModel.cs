@@ -13,6 +13,7 @@ namespace Bibliotheque.ViewModels
 
         public ObservableCollection<Livre> Livres { get; } = new();
 
+        // On garde juste la référence, pas besoin de toute la logique de note ici désormais
         private Livre? _livreSelectionne;
         public Livre? LivreSelectionne
         {
@@ -20,96 +21,30 @@ namespace Bibliotheque.ViewModels
             set => SetProperty(ref _livreSelectionne, value);
         }
 
-        private double _noteUtilisateur;
-        public double NoteUtilisateur
-        {
-            get => _noteUtilisateur;
-            set => SetProperty(ref _noteUtilisateur, value);
-        }
-
-        private string _message = string.Empty;
-        public string Message
-        {
-            get => _message;
-            set => SetProperty(ref _message, value);
-        }
-
-        public ICommand SauvegarderEvaluationCommand { get; }
-
         public ListeLivresViewModel(XmlBibliothequeService xmlService)
         {
             _xmlService = xmlService;
+            ChargerLivres();
+        }
 
-            // Charger tous les livres au démarrage
+        public void ChargerLivres()
+        {
+            Livres.Clear();
             var livres = _xmlService.ChargerLivres();
             foreach (var l in livres)
                 Livres.Add(l);
-
-            SauvegarderEvaluationCommand = new Command(SauvegarderEvaluation);
         }
 
         /// <summary>
-        /// Appelé quand l’utilisateur clique sur "Sélectionner" ou "Évaluer".
+        /// Appelé quand on clique sur un livre dans la liste.
+        /// Met à jour la Session globale pour que la page suivante sache quel livre afficher.
         /// </summary>
-        public void SelectionnerLivre(Livre livre)
+        public void SelectionnerLivrePourNavigation(Livre livre)
         {
             LivreSelectionne = livre;
 
-            var email = Session.CompteCourant?.Email;
-            if (!string.IsNullOrWhiteSpace(email))
-            {
-                var noteExistante = _xmlService.ObtenirNoteUtilisateurPourLivre(email, livre.ISBN);
-                NoteUtilisateur = noteExistante ?? 0;
-            }
-            else
-            {
-                NoteUtilisateur = 0;
-            }
-
-            Message = string.Empty;
-        }
-
-        /// <summary>
-        /// Enregistre ou modifie l’évaluation de l’utilisateur pour le livre sélectionné.
-        /// </summary>
-        private void SauvegarderEvaluation()
-        {
-            if (LivreSelectionne == null)
-            {
-                Message = "Veuillez d'abord sélectionner un livre.";
-                return;
-            }
-
-            var email = Session.CompteCourant?.Email;
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                Message = "Vous devez être connecté pour évaluer.";
-                return;
-            }
-
-            if (NoteUtilisateur < 0 || NoteUtilisateur > 5)
-            {
-                Message = "La note doit être entre 0 et 5.";
-                return;
-            }
-
-            // 1. Enregistrer / modifier l’évaluation dans le XML
-            _xmlService.EnregistrerEvaluationPourLivre(email, LivreSelectionne.ISBN, NoteUtilisateur);
-
-            // 2. Recharger le livre depuis le XML pour mettre à jour la moyenne & le nombre d’évaluations
-            var tousLesLivres = _xmlService.ChargerLivres();
-            var livreMaj = tousLesLivres.FirstOrDefault(l => l.ISBN == LivreSelectionne.ISBN);
-            if (livreMaj != null)
-            {
-                // Remplacer l’ancienne entrée dans la collection affichée
-                int index = Livres.IndexOf(LivreSelectionne);
-                if (index >= 0)
-                    Livres[index] = livreMaj;
-
-                LivreSelectionne = livreMaj;
-            }
-
-            Message = "Évaluation enregistrée.";
+            // C'est ici le point clé : on stocke le livre dans la Session
+            Session.LivreSelectionne = livre;
         }
     }
 }

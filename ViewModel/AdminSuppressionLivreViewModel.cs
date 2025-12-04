@@ -70,7 +70,7 @@ namespace Bibliotheque.ViewModels
                     string isbnLivre = (l.ISBN ?? string.Empty)
                         .Replace("-", "")
                         .Replace(" ", "");
-                    return isbnLivre.Contains(filtreNettoye, StringComparison.OrdinalIgnoreCase);
+                    return isbnLivre.Equals(filtreNettoye, StringComparison.OrdinalIgnoreCase);
                 })
                 .ToList();
 

@@ -4,130 +4,49 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="10" Spacing="10">
+    <!-- On utilise RefreshView pour permettre de recharger la liste en tirant vers le bas -->
+    <RefreshView Command="{Binding ChargerLivresCommand}" IsRefreshing="{Binding IsRefreshing}">
+        <ScrollView>
+            <VerticalStackLayout Padding="10" Spacing="10">
 
-            <Label Text="Liste des livres"
-                   FontSize="24"
-                   FontAttributes="Bold"
-                   HorizontalOptions="Center" />
+                <Label Text="Liste des livres"
+                       FontSize="24"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center" />
 
-            <!-- LISTE DES LIVRES -->
-            <CollectionView ItemsSource="{Binding Livres}">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Frame Margin="5"
-                               Padding="10"
-                               HasShadow="True"
-                               CornerRadius="8">
-                            <VerticalStackLayout Spacing="4">
-                                <Label Text="{Binding Titre}"
-                                       FontAttributes="Bold" />
-                                <Label Text="{Binding Auteur}"
-                                       FontSize="12" />
-                                <Label Text="{Binding DatePublication}"
-                                       FontSize="12" />
-                                <Label Text="{Binding MoyenneEvaluation,
-                                                      StringFormat='Moyenne : {0:F1}/5'}"
-                                       FontSize="12" />
+                <!-- LISTE DES LIVRES -->
+                <CollectionView ItemsSource="{Binding Livres}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Frame Margin="5"
+                                   Padding="10"
+                                   HasShadow="True"
+                                   CornerRadius="8">
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="{Binding Titre}"
+                                           FontAttributes="Bold"
+                                           FontSize="16"/>
+                                    <Label Text="{Binding Auteur}"
+                                           FontSize="14"
+                                           TextColor="Gray"/>
 
-                                <!-- BOUTONS POUR CE LIVRE -->
-                                <HorizontalStackLayout Spacing="10"
-                                                       Margin="0,5,0,0">
-                                    <Button Text="Sélectionner"
-                                            Clicked="OnSelectionnerClicked" />
-                                    <Button Text="Évaluer"
-                                            Clicked="OnEvaluerClicked" />
-                                </HorizontalStackLayout>
-                            </VerticalStackLayout>
-                        </Frame>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
+                                    <Label Text="{Binding MoyenneEvaluation, StringFormat='⭐ {0:F1}/5'}"
+                                           FontSize="14"
+                                           TextColor="{StaticResource Primary}"/>
 
-            <!-- SÉPARATEUR -->
-            <BoxView HeightRequest="1"
-                     BackgroundColor="Gray"
-                     Margin="0,10,0,10" />
+                                    <!-- Un seul bouton pour voir les détails et noter -->
+                                    <Button Text="Voir détails &amp; Noter"
+                                            Margin="0,10,0,0"
+                                            Clicked="OnVoirDetailsClicked" />
+                                </VerticalStackLayout>
+                            </Frame>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
 
-            <!-- DÉTAILS DU LIVRE SÉLECTIONNÉ -->
-            <Label Text="Détails du livre sélectionné"
-                   FontSize="20"
-                   FontAttributes="Bold" />
+                <!-- J'ai supprimé toute la partie "Détails" qui était ici -->
 
-            <Label>
-                <Label.Text>
-                    <Binding Path="LivreSelectionne.Titre" />
-                </Label.Text>
-            </Label>
-
-            <Label>
-                <Label.Text>
-                    <Binding Path="LivreSelectionne.Auteur" />
-                </Label.Text>
-            </Label>
-
-            <Label>
-                <Label.Text>
-                    <Binding Path="LivreSelectionne.MaisonEdition" />
-                </Label.Text>
-            </Label>
-
-            <Label>
-                <Label.Text>
-                    <Binding Path="LivreSelectionne.DatePublication" />
-                </Label.Text>
-            </Label>
-
-            <Label>
-                <Label.Text>
-                    <Binding Path="LivreSelectionne.ISBN" />
-                </Label.Text>
-            </Label>
-
-            <Label>
-                <Label.Text>
-                    <Binding Path="LivreSelectionne.Description" />
-                </Label.Text>
-            </Label>
-
-            <Label>
-                <Label.Text>
-                    <Binding Path="LivreSelectionne.NombreEvaluations"
-                             StringFormat="Nombre d'évaluations : {0}" />
-                </Label.Text>
-            </Label>
-
-            <Label>
-                <Label.Text>
-                    <Binding Path="LivreSelectionne.MoyenneEvaluation"
-                             StringFormat="Moyenne actuelle : {0:F1}/5" />
-                </Label.Text>
-            </Label>
-
-            <!-- ZONE D'ÉVALUATION -->
-            <Label Text="Votre note (sur 5) :"
-                   FontAttributes="Bold"
-                   Margin="0,10,0,0" />
-
-            <!-- Slider = 5 “étoiles” pour l’instant -->
-            <Slider Minimum="0"
-                    Maximum="5"
-                    Value="{Binding NoteUtilisateur}" />
-
-            <Label>
-                <Label.Text>
-                    <Binding Path="NoteUtilisateur"
-                             StringFormat="Note choisie : {0:F1}/5" />
-                </Label.Text>
-            </Label>
-
-            <Button Text="Enregistrer mon évaluation"
-                    Command="{Binding SauvegarderEvaluationCommand}" />
-
-            <Label Text="{Binding Message}"
-                   TextColor="Red" />
-
-        </VerticalStackLayout>
-    </ScrollView>
+            </VerticalStackLayout>
+        </ScrollView>
+    </RefreshView>
 </ContentPage>
