@@ -13,7 +13,6 @@ namespace Bibliotheque.ViewModels
 
         public ObservableCollection<Livre> Livres { get; } = new();
 
-        // On garde juste la référence, pas besoin de toute la logique de note ici désormais
         private Livre? _livreSelectionne;
         public Livre? LivreSelectionne
         {
@@ -21,9 +20,34 @@ namespace Bibliotheque.ViewModels
             set => SetProperty(ref _livreSelectionne, value);
         }
 
+        private bool _isRefreshing;
+        public bool IsRefreshing
+        {
+            get => _isRefreshing;
+            set => SetProperty(ref _isRefreshing, value);
+        }
+
+        public ICommand ChargerLivresCommand { get; }
+        public ICommand AllerAuxFavorisCommand { get; }
+
         public ListeLivresViewModel(XmlBibliothequeService xmlService)
         {
             _xmlService = xmlService;
+
+            // Commande pour recharger la liste
+            ChargerLivresCommand = new Command(() =>
+            {
+                IsRefreshing = true;
+                ChargerLivres();
+                IsRefreshing = false;
+            });
+
+            // Commande pour aller vers les favoris
+            AllerAuxFavorisCommand = new Command(async () =>
+            {
+                await Shell.Current.GoToAsync("FavorisPage");
+            });
+
             ChargerLivres();
         }
 
@@ -35,15 +59,9 @@ namespace Bibliotheque.ViewModels
                 Livres.Add(l);
         }
 
-        /// <summary>
-        /// Appelé quand on clique sur un livre dans la liste.
-        /// Met à jour la Session globale pour que la page suivante sache quel livre afficher.
-        /// </summary>
         public void SelectionnerLivrePourNavigation(Livre livre)
         {
             LivreSelectionne = livre;
-
-            // C'est ici le point clé : on stocke le livre dans la Session
             Session.LivreSelectionne = livre;
         }
     }

@@ -3,6 +3,7 @@ using Microsoft.Maui.Controls;
 
 namespace Bibliotheque.ViewModels
 {
+    //ce que L'admin voit en se connectant
     public class AdminDashboardViewModel : BaseViewModel
     {
         public ICommand AllerAjoutLivreCommand { get; }
@@ -14,7 +15,6 @@ namespace Bibliotheque.ViewModels
         {
             AllerAjoutLivreCommand = new Command(async () =>
             {
-                // ⛔ AVANT : await Shell.Current.GoToAsync("//AdminAjoutLivrePage");
                 await Shell.Current.GoToAsync("AdminAjoutLivrePage");
             });
 

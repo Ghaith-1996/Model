@@ -5,6 +5,7 @@ using Bibliotheque.Services;
 
 namespace Bibliotheque.ViewModels
 {
+    //viewmodel pour la connexion
     public class LoginViewModel : BaseViewModel
     {
         private readonly AuthService _authService;

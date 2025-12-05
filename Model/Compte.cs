@@ -3,7 +3,7 @@
     public class Compte
     {
         public string Email { get; set; } = string.Empty;
-        public string MotDePasse { get; set; } = string.Empty; // vide pour certains clients
+        public string MotDePasse { get; set; } = string.Empty; // vide pour certains 
         public string Nom { get; set; } = string.Empty;
         public string Prenom { get; set; } = string.Empty;
 
