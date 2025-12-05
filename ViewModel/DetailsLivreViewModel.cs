@@ -60,9 +60,7 @@ namespace Bibliotheque.ViewModels
             SauvegarderEvaluationCommand = new Command(SauvegarderEvaluation);
         }
 
-        /// <summary>
-        /// Appelé par la page quand on arrive sur les détails.
-        /// </summary>
+        // Initialiser le ViewModel avec un livre spécifique
         public void Initialiser(Livre livre)
         {
             Livre = livre;
@@ -102,10 +100,10 @@ namespace Bibliotheque.ViewModels
                 return;
             }
 
-            // 1. Enregistrer / modifier l'évaluation dans le XML principal
+            //Enregistrer ou modifier l'évaluation dans le XML principal
             _xmlService.EnregistrerEvaluationPourLivre(email, Livre.ISBN, NoteUtilisateur);
 
-            // 2. Recharger le livre mis à jour pour récupérer Moyenne + N
+            //mis a jour de l'evaluation
             var livres = _xmlService.ChargerLivres();
             var livreMaj = livres.First(l => l.ISBN == Livre.ISBN);
             Livre = livreMaj;
@@ -113,7 +111,7 @@ namespace Bibliotheque.ViewModels
             Moyenne = Livre.MoyenneEvaluation;
             NombreEvaluations = Livre.NombreEvaluations;
 
-            // 3. Gérer les favoris automatiquement (moyenne >= 4)
+            //Gérer les favoris automatiquement (moyenne >= 4)
             bool estFavori = Livre.MoyenneEvaluation >= 4.0;
             _favorisService.AjouterOuMettreAJourFavori(email, Livre.ISBN, estFavori);
 

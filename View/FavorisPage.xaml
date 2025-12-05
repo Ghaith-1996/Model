@@ -2,28 +2,71 @@
 <ContentPage
     x:Class="View.FavorisPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Mes Coups de Cœur">
 
-    <VerticalStackLayout Padding="10" Spacing="10">
-        <Label Text="Mes livres favoris"
-               FontSize="24"
-               FontAttributes="Bold"
-               HorizontalOptions="Center" />
+    <VerticalStackLayout Spacing="0">
 
-        <CollectionView ItemsSource="{Binding Favoris}">
+        <VerticalStackLayout Padding="20" Spacing="5" BackgroundColor="{StaticResource Primary}">
+            <Label Text="Mes Favoris" 
+                   TextColor="White" 
+                   FontSize="24" 
+                   FontAttributes="Bold" />
+            <Label Text="Livres notés 4/5 et plus" 
+                   TextColor="{StaticResource Gray200}" 
+                   FontSize="14" />
+        </VerticalStackLayout>
+
+        <VerticalStackLayout VerticalOptions="Center" 
+                             HorizontalOptions="Center"
+                             Margin="0,50,0,0"
+                             IsVisible="{Binding Favoris.Count, Converter={StaticResource InvertedBoolConverter}}">
+
+        </VerticalStackLayout>
+        
+        <CollectionView ItemsSource="{Binding Favoris}"
+                        SelectionMode="None"
+                        Margin="10"
+                        VerticalOptions="FillAndExpand">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="10" />
+            </CollectionView.ItemsLayout>
+
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Frame Margin="5"
-                           Padding="10"
-                           HasShadow="True"
-                           CornerRadius="8">
-                        <VerticalStackLayout Spacing="4">
-                            <Label Text="{Binding Titre}"
-                                   FontAttributes="Bold" />
-                            <Label Text="{Binding Auteur}" />
-                            <Label Text="{Binding MoyenneEvaluation,
-                                                  StringFormat='Moyenne : {0:F1}/5'}" />
-                        </VerticalStackLayout>
+                    <Frame Padding="10" CornerRadius="10" HasShadow="True" BorderColor="Transparent">
+
+                        <HorizontalStackLayout Spacing="15">
+
+                            <Frame HeightRequest="60" 
+                                   WidthRequest="40" 
+                                   BackgroundColor="{StaticResource Secondary}" 
+                                   Padding="0" 
+                                   CornerRadius="2"
+                                   VerticalOptions="Center">
+                                <Label Text="📖" 
+                                       HorizontalOptions="Center" 
+                                       VerticalOptions="Center" 
+                                       FontSize="20"/>
+                            </Frame>
+
+                            <VerticalStackLayout Spacing="2" VerticalOptions="Center">
+                                <Label Text="{Binding Titre}" 
+                                       FontAttributes="Bold" 
+                                       FontSize="16" 
+                                       LineBreakMode="TailTruncation"/>
+
+                                <Label Text="{Binding Auteur}" 
+                                       TextColor="Gray" 
+                                       FontSize="12"/>
+
+                                <Label Text="{Binding MoyenneEvaluation, StringFormat='⭐ {0:F1} / 5'}" 
+                                       TextColor="{StaticResource Tertiary}" 
+                                       FontAttributes="Bold"
+                                       FontSize="12"/>
+                            </VerticalStackLayout>
+
+                        </HorizontalStackLayout>
                     </Frame>
                 </DataTemplate>
             </CollectionView.ItemTemplate>

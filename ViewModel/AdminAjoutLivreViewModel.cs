@@ -8,8 +8,11 @@ namespace Bibliotheque.ViewModels
 {
     public class AdminAjoutLivreViewModel : BaseViewModel
     {
+
+        
         private readonly XmlBibliothequeService _xmlService;
 
+        // Propriétés d'ajout de livre
         public string Titre { get => _titre; set => SetProperty(ref _titre, value); }
         public string Auteur { get => _auteur; set => SetProperty(ref _auteur, value); }
         public string ISBN { get => _isbn; set => SetProperty(ref _isbn, value); }
@@ -30,7 +33,7 @@ namespace Bibliotheque.ViewModels
             get => _message;
             set => SetProperty(ref _message, value);
         }
-
+        // Commande pour ajouter un livre
         public ICommand AjouterLivreCommand { get; }
 
         public AdminAjoutLivreViewModel(XmlBibliothequeService xmlService)
@@ -38,7 +41,7 @@ namespace Bibliotheque.ViewModels
             _xmlService = xmlService;
             AjouterLivreCommand = new Command(AjouterLivre);
         }
-
+        // Méthode pour ajouter un livre
         private void AjouterLivre()
         {
             Message = string.Empty;

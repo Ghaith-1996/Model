@@ -8,9 +8,6 @@ using System.Xml;
 
 namespace Bibliotheque.Services
 {
-    /// <summary>
-    /// Service responsable de la lecture / écriture du fichier bibliotheque.xml.
-    /// </summary>
     public class XmlBibliothequeService
     {
         private readonly string _cheminFichier;
@@ -18,117 +15,59 @@ namespace Bibliotheque.Services
         public XmlBibliothequeService(string cheminFichier)
         {
             _cheminFichier = cheminFichier;
-
-            // S'assurer que le dossier existe
             string? dossier = Path.GetDirectoryName(_cheminFichier);
             if (!string.IsNullOrEmpty(dossier) && !Directory.Exists(dossier))
             {
                 Directory.CreateDirectory(dossier);
             }
-
-            // Forcer la création / vérification du XML dès le départ
-            ChargerDocument();
+            ChargerDocument(); 
         }
-
-        // ---------- PUBLIC : LIVRES ----------
-
+        // gérer les données dans le XML.
         public List<Livre> ChargerLivres()
         {
-            XmlDocument doc = ChargerDocument();
-            List<Livre> livres = new();
-
-            XmlElement? racine = doc.DocumentElement;
-            if (racine == null)
-                return livres;
-
-            XmlElement? noeudLivres = racine["Livres"];
-            if (noeudLivres == null)
-                return livres;
-
-            XmlNodeList listeLivres = noeudLivres.GetElementsByTagName("Livre");
-            foreach (XmlElement elementLivre in listeLivres)
+            var livres = new List<Livre>();
+            foreach (XmlElement el in GetElementsDeSection("Livres", "Livre"))
             {
-                Livre livre = new Livre
+                livres.Add(new Livre
                 {
-                    Titre = elementLivre["Titre"]?.InnerText ?? string.Empty,
-                    Auteur = elementLivre["Auteur"]?.InnerText ?? string.Empty,
-                    ISBN = elementLivre["ISBN"]?.InnerText ?? string.Empty,
-                    MaisonEdition = elementLivre["MaisonEdition"]?.InnerText ?? string.Empty,
-                    DatePublication = elementLivre["DatePublication"]?.InnerText ?? string.Empty,
-                    Description = elementLivre["Description"]?.InnerText ?? string.Empty
-                };
-
-                if (double.TryParse(
-                        elementLivre["MoyenneEvaluation"]?.InnerText,
-                        NumberStyles.Any,
-                        CultureInfo.InvariantCulture,
-                        out double moyenne))
-                {
-                    livre.MoyenneEvaluation = moyenne;
-                }
-
-                if (int.TryParse(
-                        elementLivre["NombreEvaluations"]?.InnerText,
-                        out int nbEval))
-                {
-                    livre.NombreEvaluations = nbEval;
-                }
-
-                livres.Add(livre);
+                    Titre = GetTexte(el, "Titre"),
+                    Auteur = GetTexte(el, "Auteur"),
+                    ISBN = GetTexte(el, "ISBN"),
+                    MaisonEdition = GetTexte(el, "MaisonEdition"),
+                    DatePublication = GetTexte(el, "DatePublication"),
+                    Description = GetTexte(el, "Description"),
+                    MoyenneEvaluation = GetDouble(el, "MoyenneEvaluation"),
+                    NombreEvaluations = GetInt(el, "NombreEvaluations")
+                });
             }
-
-            System.Diagnostics.Debug.WriteLine($"[DEBUG] ChargerLivres() -> {livres.Count} livres");
-            foreach (var l in livres)
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Livre: {l.Titre} | ISBN={l.ISBN}");
-
             return livres;
         }
-
+        //Sauvegarde la liste des livres dans le XML.
         public void SauvegarderLivres(List<Livre> livres)
         {
-            XmlDocument doc = ChargerDocument();
-            XmlElement? racine = doc.DocumentElement;
-            if (racine == null)
-                return;
-
-            XmlElement? noeudLivres = racine["Livres"];
-            if (noeudLivres == null)
+            MettreAJourSection("Livres", (doc, parent) =>
             {
-                noeudLivres = doc.CreateElement("Livres");
-                racine.AppendChild(noeudLivres);
-            }
-            else
-            {
-                noeudLivres.RemoveAll();
-            }
-
-            foreach (Livre livre in livres)
-            {
-                XmlElement livreElement = doc.CreateElement("Livre");
-
-                AppendElement(doc, livreElement, "Titre", livre.Titre);
-                AppendElement(doc, livreElement, "Auteur", livre.Auteur);
-                AppendElement(doc, livreElement, "ISBN", livre.ISBN);
-                AppendElement(doc, livreElement, "MaisonEdition", livre.MaisonEdition);
-                AppendElement(doc, livreElement, "DatePublication", livre.DatePublication);
-                AppendElement(doc, livreElement, "Description", livre.Description);
-                AppendElement(doc, livreElement, "MoyenneEvaluation",
-                    livre.MoyenneEvaluation.ToString(CultureInfo.InvariantCulture));
-                AppendElement(doc, livreElement, "NombreEvaluations",
-                    livre.NombreEvaluations.ToString(CultureInfo.InvariantCulture));
-
-                noeudLivres.AppendChild(livreElement);
-            }
-
-            doc.Save(_cheminFichier);
+                foreach (var livre in livres)
+                {
+                    XmlElement el = doc.CreateElement("Livre");
+                    AppendElement(doc, el, "Titre", livre.Titre);
+                    AppendElement(doc, el, "Auteur", livre.Auteur);
+                    AppendElement(doc, el, "ISBN", livre.ISBN);
+                    AppendElement(doc, el, "MaisonEdition", livre.MaisonEdition);
+                    AppendElement(doc, el, "DatePublication", livre.DatePublication);
+                    AppendElement(doc, el, "Description", livre.Description);
+                    AppendElement(doc, el, "MoyenneEvaluation", livre.MoyenneEvaluation.ToString(CultureInfo.InvariantCulture));
+                    AppendElement(doc, el, "NombreEvaluations", livre.NombreEvaluations.ToString(CultureInfo.InvariantCulture));
+                    parent.AppendChild(el);
+                }
+            });
         }
 
         public void AjouterLivre(Livre nouveauLivre)
         {
             var livres = ChargerLivres();
-
-            bool existeDeja = livres.Any(l => l.ISBN == nouveauLivre.ISBN);
-            if (existeDeja)
+            // Vérifier isbn unique
+            if (livres.Any(l => l.ISBN == nouveauLivre.ISBN))
                 throw new InvalidOperationException("Un livre avec cet ISBN existe déjà.");
 
             livres.Add(nouveauLivre);
@@ -138,176 +77,94 @@ namespace Bibliotheque.Services
         public void SupprimerLivreParIsbn(string isbn)
         {
             var livres = ChargerLivres();
-
-            var restants = livres
-                .Where(l => !l.ISBN.Equals(isbn, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-            SauvegarderLivres(restants);
+            SauvegarderLivres(livres.Where(l => !l.ISBN.Equals(isbn, StringComparison.OrdinalIgnoreCase)).ToList());
         }
 
-        // ---------- PUBLIC : COMPTES ----------
-
+        //charger la liste
         public List<Compte> ChargerComptes()
         {
-            XmlDocument doc = ChargerDocument();
-            List<Compte> comptes = new();
-
-            XmlElement? racine = doc.DocumentElement;
-            if (racine == null)
-                return comptes;
-
-            XmlElement? noeudComptes = racine["Comptes"];
-            if (noeudComptes == null)
-                return comptes;
-
-            XmlNodeList listeComptes = noeudComptes.GetElementsByTagName("Compte");
-            foreach (XmlElement elementCompte in listeComptes)
+            var comptes = new List<Compte>();
+            foreach (XmlElement el in GetElementsDeSection("Comptes", "Compte"))
             {
-                string email = elementCompte["Email"]?.InnerText ?? string.Empty;
-                string motDePasse = elementCompte["MotDePasse"]?.InnerText ?? string.Empty;
-                string nom = elementCompte["Nom"]?.InnerText ?? string.Empty;
-                string prenom = elementCompte["Prenom"]?.InnerText ?? string.Empty;
+                string email = GetTexte(el, "Email");
+                bool estAdmin = email.Equals("admin@exemple.com");
 
-                bool estAdmin = email.Equals("admin@exemple.com", StringComparison.OrdinalIgnoreCase);
-
-                Compte compte = new Compte(email, nom, prenom, estAdmin)
+                comptes.Add(new Compte(email, GetTexte(el, "Nom"), GetTexte(el, "Prenom"), estAdmin)
                 {
-                    MotDePasse = motDePasse
-                };
-
-                comptes.Add(compte);
+                    MotDePasse = GetTexte(el, "MotDePasse")
+                });
             }
-
             return comptes;
         }
 
+     //Sauvegarde la liste des évaluations dans le XML
         public void SauvegarderComptes(List<Compte> comptes)
         {
-            XmlDocument doc = ChargerDocument();
-            XmlElement? racine = doc.DocumentElement;
-            if (racine == null)
-                return;
-
-            XmlElement? noeudComptes = racine["Comptes"];
-            if (noeudComptes == null)
+            MettreAJourSection("Comptes", (doc, parent) =>
             {
-                noeudComptes = doc.CreateElement("Comptes");
-                racine.AppendChild(noeudComptes);
-            }
-            else
-            {
-                noeudComptes.RemoveAll();
-            }
-
-            foreach (Compte compte in comptes)
-            {
-                XmlElement compteElement = doc.CreateElement("Compte");
-
-                AppendElement(doc, compteElement, "Email", compte.Email);
-                AppendElement(doc, compteElement, "MotDePasse", compte.MotDePasse);
-                AppendElement(doc, compteElement, "Nom", compte.Nom);
-                AppendElement(doc, compteElement, "Prenom", compte.Prenom);
-
-                noeudComptes.AppendChild(compteElement);
-            }
-
-            doc.Save(_cheminFichier);
+                foreach (var compte in comptes)
+                {
+                    XmlElement el = doc.CreateElement("Compte");
+                    AppendElement(doc, el, "Email", compte.Email);
+                    AppendElement(doc, el, "MotDePasse", compte.MotDePasse);
+                    AppendElement(doc, el, "Nom", compte.Nom);
+                    AppendElement(doc, el, "Prenom", compte.Prenom);
+                    parent.AppendChild(el);
+                }
+            });
         }
 
-        // ---------- PUBLIC : EVALUATIONS (je garde ton code) ----------
-
+        //charger la liste des évaluations
         public List<Evaluation> ChargerEvaluations()
         {
-            XmlDocument doc = ChargerDocument();
-            List<Evaluation> evaluations = new();
-
-            XmlElement? racine = doc.DocumentElement;
-            if (racine == null)
-                return evaluations;
-
-            XmlElement? noeudEvaluations = racine["Evaluations"];
-            if (noeudEvaluations == null)
-                return evaluations;
-
-            XmlNodeList listeEval = noeudEvaluations.GetElementsByTagName("Evaluation");
-            foreach (XmlElement elementEval in listeEval)
+            var evals = new List<Evaluation>();
+            foreach (XmlElement el in GetElementsDeSection("Evaluations", "Evaluation"))
             {
-                string email = elementEval["EmailClient"]?.InnerText ?? string.Empty;
-                string isbn = elementEval["IsbnLivre"]?.InnerText ?? string.Empty;
-                double note = 0;
-
-                double.TryParse(
-                    elementEval["Note"]?.InnerText,
-                    NumberStyles.Any,
-                    CultureInfo.InvariantCulture,
-                    out note);
-
-                evaluations.Add(new Evaluation(email, isbn, note));
+                evals.Add(new Evaluation(
+                    GetTexte(el, "EmailClient"),
+                    GetTexte(el, "IsbnLivre"),
+                    GetDouble(el, "Note")
+                ));
             }
-
-            return evaluations;
+            return evals;
         }
 
+        //Sauvegarde la liste des évaluations dans le XML
         public void SauvegarderEvaluations(List<Evaluation> evaluations)
         {
-            XmlDocument doc = ChargerDocument();
-            XmlElement? racine = doc.DocumentElement;
-            if (racine == null)
-                return;
-
-            XmlElement? noeudEvaluations = racine["Evaluations"];
-            if (noeudEvaluations == null)
+            MettreAJourSection("Evaluations", (doc, parent) =>
             {
-                noeudEvaluations = doc.CreateElement("Evaluations");
-                racine.AppendChild(noeudEvaluations);
-            }
-            else
-            {
-                noeudEvaluations.RemoveAll();
-            }
-
-            foreach (var eval in evaluations)
-            {
-                XmlElement evalElement = doc.CreateElement("Evaluation");
-
-                AppendElement(doc, evalElement, "EmailClient", eval.EmailClient);
-                AppendElement(doc, evalElement, "IsbnLivre", eval.IsbnLivre);
-                AppendElement(doc, evalElement, "Note",
-                    eval.Note.ToString(CultureInfo.InvariantCulture));
-
-                noeudEvaluations.AppendChild(evalElement);
-            }
-
-            doc.Save(_cheminFichier);
+                foreach (var eval in evaluations)
+                {
+                    XmlElement el = doc.CreateElement("Evaluation");
+                    AppendElement(doc, el, "EmailClient", eval.EmailClient);
+                    AppendElement(doc, el, "IsbnLivre", eval.IsbnLivre);
+                    AppendElement(doc, el, "Note", eval.Note.ToString(CultureInfo.InvariantCulture));
+                    parent.AppendChild(el);
+                }
+            });
         }
 
+        // la note par email et isbn
         public double? ObtenirNoteUtilisateurPourLivre(string emailClient, string isbnLivre)
         {
-            var evaluations = ChargerEvaluations();
-
-            var eval = evaluations
+            return ChargerEvaluations()
                 .FirstOrDefault(e =>
                     e.EmailClient.Equals(emailClient, StringComparison.OrdinalIgnoreCase) &&
-                    e.IsbnLivre.Equals(isbnLivre, StringComparison.OrdinalIgnoreCase));
-
-            return eval == null ? (double?)null : eval.Note;
+                    e.IsbnLivre.Equals(isbnLivre, StringComparison.OrdinalIgnoreCase))?.Note;
         }
 
+        // Enregistre ou met à jour l'évaluation
         public void EnregistrerEvaluationPourLivre(string emailClient, string isbnLivre, double nouvelleNote)
         {
             var evaluations = ChargerEvaluations();
-
-            var evalExistante = evaluations
-                .FirstOrDefault(e =>
-                    e.EmailClient.Equals(emailClient, StringComparison.OrdinalIgnoreCase) &&
-                    e.IsbnLivre.Equals(isbnLivre, StringComparison.OrdinalIgnoreCase));
+            var evalExistante = evaluations.FirstOrDefault(e =>
+                e.EmailClient.Equals(emailClient, StringComparison.OrdinalIgnoreCase) &&
+                e.IsbnLivre.Equals(isbnLivre, StringComparison.OrdinalIgnoreCase));
 
             var livres = ChargerLivres();
-            var livre = livres.FirstOrDefault(l => l.ISBN == isbnLivre);
-
-            if (livre == null)
-                throw new InvalidOperationException("Livre introuvable pour l’ISBN donné.");
+            var livre = livres.FirstOrDefault(l => l.ISBN == isbnLivre)
+                        ?? throw new InvalidOperationException("Livre introuvable.");
 
             if (evalExistante == null)
             {
@@ -316,8 +173,7 @@ namespace Bibliotheque.Services
             }
             else
             {
-                double ancienneNote = evalExistante.Note;
-                livre.ModifierEvaluation(ancienneNote, nouvelleNote);
+                livre.ModifierEvaluation(evalExistante.Note, nouvelleNote);
                 evalExistante.Note = nouvelleNote;
             }
 
@@ -325,131 +181,149 @@ namespace Bibliotheque.Services
             SauvegarderEvaluations(evaluations);
         }
 
-        // ---------- PRIVÉ : CREATION / INIT ----------
+        /// Récupère la liste
+        private IEnumerable<XmlElement> GetElementsDeSection(string nomSection, string nomElementEnfant)
+        {
+            XmlDocument doc = ChargerDocument();
+            XmlElement? racine = doc.DocumentElement;
+            if (racine == null) yield break;
 
+            XmlElement? section = racine[nomSection];
+            if (section == null) yield break;
+
+            foreach (XmlNode node in section.GetElementsByTagName(nomElementEnfant))
+            {
+                if (node is XmlElement element)
+                    yield return element;
+            }
+        }
+
+        /// Met à jour 
+        private void MettreAJourSection(string nomSection, Action<XmlDocument, XmlElement> actionRemplissage)
+        {
+            XmlDocument doc = ChargerDocument();
+            XmlElement? racine = doc.DocumentElement;
+            if (racine == null) return;
+
+            XmlElement? section = racine[nomSection];
+            if (section == null)
+            {
+                section = doc.CreateElement(nomSection);
+                racine.AppendChild(section);
+            }
+            else
+            {
+                section.RemoveAll();
+            }
+
+            actionRemplissage(doc, section);
+            doc.Save(_cheminFichier);
+        }
+
+        // Récupère le titre, auteur, etc.
+        private string GetTexte(XmlElement el, string tag) => el[tag]?.InnerText ?? string.Empty;
+
+        // Récupère la moyenne de l'évaluation
+        private double GetDouble(XmlElement el, string tag)
+        {
+            if (double.TryParse(el[tag]?.InnerText, NumberStyles.Any, CultureInfo.InvariantCulture, out double res))
+                return res;
+            return 0;
+        }
+
+        // Récupère le nombre d'évaluations
+        private int GetInt(XmlElement el, string tag)
+        {
+            if (int.TryParse(el[tag]?.InnerText, out int res))
+                return res;
+            return 0;
+        }
+        private static void AppendElement(XmlDocument doc, XmlElement parent, string name, string value)
+        {
+            XmlElement child = doc.CreateElement(name);
+            child.InnerText = value;
+            parent.AppendChild(child);
+        }
+
+        // / Charge le document XML ou le crée
         private XmlDocument ChargerDocument()
         {
             XmlDocument doc = new XmlDocument();
-
             if (File.Exists(_cheminFichier))
             {
-                doc.Load(_cheminFichier);
-
-                XmlElement? racine = doc.DocumentElement;
-                if (racine == null || racine.Name != "Bibliotheque")
+                try
                 {
-                    return CreerDocumentInitial();
+                    doc.Load(_cheminFichier);
+                    if (doc.DocumentElement?.Name == "Bibliotheque")
+                        return doc;
                 }
-
-                XmlElement? livres = racine["Livres"];
-                if (livres == null)
-                {
-                    livres = doc.CreateElement("Livres");
-                    racine.AppendChild(livres);
+                catch {
+                    CreerDocumentInitial();
                 }
-
-                XmlElement? comptes = racine["Comptes"];
-                if (comptes == null)
-                {
-                    comptes = doc.CreateElement("Comptes");
-                    racine.AppendChild(comptes);
-                }
-
-                XmlElement? evaluations = racine["Evaluations"];
-                if (evaluations == null)
-                {
-                    evaluations = doc.CreateElement("Evaluations");
-                    racine.AppendChild(evaluations);
-                }
-
-                // Si aucun livre et aucun compte → on injecte les données initiales
-                if (!livres.HasChildNodes && !comptes.HasChildNodes)
-                {
-                    RemplirDonneesInitiales(doc, livres, comptes);
-                    doc.Save(_cheminFichier);
-                }
-
-                return doc;
             }
-
-            // Fichier inexistant → on le crée
             return CreerDocumentInitial();
         }
 
         private XmlDocument CreerDocumentInitial()
         {
             XmlDocument doc = new XmlDocument();
-
-            XmlDeclaration declaration = doc.CreateXmlDeclaration("1.0", "utf-8", null);
-            doc.AppendChild(declaration);
+            doc.AppendChild(doc.CreateXmlDeclaration("1.0", "utf-8", null));
 
             XmlElement racine = doc.CreateElement("Bibliotheque");
             doc.AppendChild(racine);
 
-            XmlElement livres = doc.CreateElement("Livres");
-            XmlElement comptes = doc.CreateElement("Comptes");
-            XmlElement evaluations = doc.CreateElement("Evaluations");
+            // Création des sections 
+            racine.AppendChild(doc.CreateElement("Livres"));
+            racine.AppendChild(doc.CreateElement("Comptes"));
+            racine.AppendChild(doc.CreateElement("Evaluations"));
 
-            racine.AppendChild(livres);
-            racine.AppendChild(comptes);
-            racine.AppendChild(evaluations);
-
-            RemplirDonneesInitiales(doc, livres, comptes);
+            // Données par défaut
+            RemplirDonneesInitiales(doc, racine["Livres"]!, racine["Comptes"]!);
 
             doc.Save(_cheminFichier);
             return doc;
         }
 
-        private void RemplirDonneesInitiales(
-            XmlDocument doc,
-            XmlElement livres,
-            XmlElement comptes)
+        private void RemplirDonneesInitiales(XmlDocument doc, XmlElement livres, XmlElement comptes)
         {
-            // LIVRES
-            XmlElement livre1 = doc.CreateElement("Livre");
-            AppendElement(doc, livre1, "Titre", "Les Fleurs du Mal");
-            AppendElement(doc, livre1, "Auteur", "Charles Baudelaire");
-            AppendElement(doc, livre1, "ISBN", "978-2-07-038255-2");
-            AppendElement(doc, livre1, "MaisonEdition", "Gallimard");
-            AppendElement(doc, livre1, "DatePublication", "1857-06-25");
-            AppendElement(doc, livre1, "Description",
-                "Recueil de poèmes majeur de la littérature française.");
-            AppendElement(doc, livre1, "MoyenneEvaluation", "4.9");
-            AppendElement(doc, livre1, "NombreEvaluations", "1");
-            livres.AppendChild(livre1);
+            // Ajout Livre 1
+            XmlElement l1 = doc.CreateElement("Livre");
+            AppendElement(doc, l1, "Titre", "Les Fleurs du Mal");
+            AppendElement(doc, l1, "Auteur", "Charles Baudelaire");
+            AppendElement(doc, l1, "ISBN", "978-2-07-038255-2");
+            AppendElement(doc, l1, "MaisonEdition", "Gallimard");
+            AppendElement(doc, l1, "DatePublication", "1857-06-25");
+            AppendElement(doc, l1, "Description", "Recueil de poèmes majeur de la littérature française.");
+            AppendElement(doc, l1, "MoyenneEvaluation", "4.9");
+            AppendElement(doc, l1, "NombreEvaluations", "1");
+            livres.AppendChild(l1);
 
-            XmlElement livre2 = doc.CreateElement("Livre");
-            AppendElement(doc, livre2, "Titre", "Neuromancien");
-            AppendElement(doc, livre2, "Auteur", "William Gibson");
-            AppendElement(doc, livre2, "ISBN", "978-2-07-041573-0");
-            AppendElement(doc, livre2, "MaisonEdition", "J'ai lu");
-            AppendElement(doc, livre2, "DatePublication", "1984");
-            AppendElement(doc, livre2, "Description",
-                "Un roman cyberpunk qui a popularisé le terme \"matric.\"");
-            AppendElement(doc, livre2, "MoyenneEvaluation", "4.3");
-            AppendElement(doc, livre2, "NombreEvaluations", "1");
-            livres.AppendChild(livre2);
+            // Ajout Livre 2
+            XmlElement l2 = doc.CreateElement("Livre");
+            AppendElement(doc, l2, "Titre", "Neuromancien");
+            AppendElement(doc, l2, "Auteur", "William Gibson");
+            AppendElement(doc, l2, "ISBN", "978-2-07-041573-0");
+            AppendElement(doc, l2, "MaisonEdition", "J'ai lu");
+            AppendElement(doc, l2, "DatePublication", "1984");
+            AppendElement(doc, l2, "Description", "Un roman cyberpunk qui a popularisé le terme \"matrice\".");
+            AppendElement(doc, l2, "MoyenneEvaluation", "4.3");
+            AppendElement(doc, l2, "NombreEvaluations", "1");
+            livres.AppendChild(l2);
 
-            // COMPTES
-            XmlElement compteAdmin = doc.CreateElement("Compte");
-            AppendElement(doc, compteAdmin, "Email", "admin@exemple.com");
-            AppendElement(doc, compteAdmin, "MotDePasse", "420-3GP");
-            AppendElement(doc, compteAdmin, "Nom", "Administrateur");
-            AppendElement(doc, compteAdmin, "Prenom", "Principal");
-            comptes.AppendChild(compteAdmin);
+            // Ajout Admin
+            XmlElement admin = doc.CreateElement("Compte");
+            AppendElement(doc, admin, "Email", "admin@exemple.com");
+            AppendElement(doc, admin, "MotDePasse", "420-3GP");
+            AppendElement(doc, admin, "Nom", "Administrateur");
+            AppendElement(doc, admin, "Prenom", "Principal");
+            comptes.AppendChild(admin);
 
-            XmlElement compteBob = doc.CreateElement("Compte");
-            AppendElement(doc, compteBob, "Email", "bob.martin@exemple.com");
-            AppendElement(doc, compteBob, "Nom", "Martin");
-            AppendElement(doc, compteBob, "Prenom", "Bob");
-            comptes.AppendChild(compteBob);
-        }
-
-        private static void AppendElement(XmlDocument doc, XmlElement parent, string name, string value)
-        {
-            XmlElement child = doc.CreateElement(name);
-            child.InnerText = value;
-            parent.AppendChild(child);
+            // Ajout Bob
+            XmlElement bob = doc.CreateElement("Compte");
+            AppendElement(doc, bob, "Email", "bob.martin@exemple.com");
+            AppendElement(doc, bob, "Nom", "Martin");
+            AppendElement(doc, bob, "Prenom", "Bob");
+            comptes.AppendChild(bob);
         }
     }
 }

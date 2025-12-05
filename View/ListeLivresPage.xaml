@@ -4,7 +4,6 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
-    <!-- On utilise RefreshView pour permettre de recharger la liste en tirant vers le bas -->
     <RefreshView Command="{Binding ChargerLivresCommand}" IsRefreshing="{Binding IsRefreshing}">
         <ScrollView>
             <VerticalStackLayout Padding="10" Spacing="10">
@@ -13,8 +12,14 @@
                        FontSize="24"
                        FontAttributes="Bold"
                        HorizontalOptions="Center" />
+                
+                <Button Text="Voir mes favoris"
+                        Command="{Binding AllerAuxFavorisCommand}"
+                        BackgroundColor="{StaticResource Secondary}"
+                        TextColor="{StaticResource PrimaryDarkText}"
+                        HorizontalOptions="Fill" 
+                        Margin="0,0,0,10"/>
 
-                <!-- LISTE DES LIVRES -->
                 <CollectionView ItemsSource="{Binding Livres}">
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
@@ -34,7 +39,6 @@
                                            FontSize="14"
                                            TextColor="{StaticResource Primary}"/>
 
-                                    <!-- Un seul bouton pour voir les détails et noter -->
                                     <Button Text="Voir détails &amp; Noter"
                                             Margin="0,10,0,0"
                                             Clicked="OnVoirDetailsClicked" />
@@ -43,8 +47,6 @@
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>
-
-                <!-- J'ai supprimé toute la partie "Détails" qui était ici -->
 
             </VerticalStackLayout>
         </ScrollView>

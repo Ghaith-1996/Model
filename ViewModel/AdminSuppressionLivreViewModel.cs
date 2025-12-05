@@ -8,6 +8,7 @@ using Bibliotheque.Services;
 
 namespace Bibliotheque.ViewModels
 {
+    //suppression de livre par admin
     public class AdminSuppressionLivreViewModel : BaseViewModel
     {
         private readonly XmlBibliothequeService _xmlService;
@@ -39,6 +40,7 @@ namespace Bibliotheque.ViewModels
         public ICommand RechercherCommand { get; }
         public ICommand SupprimerSelectionCommand { get; }
 
+        //commande pour rechercher et supprimer un livre
         public AdminSuppressionLivreViewModel(XmlBibliothequeService xmlService)
         {
             _xmlService = xmlService;
@@ -47,6 +49,7 @@ namespace Bibliotheque.ViewModels
             SupprimerSelectionCommand = new Command(SupprimerLivreSelectionne);
         }
 
+        //recherche par isbn
         private void RechercherLivre()
         {
             Message = string.Empty;
@@ -56,15 +59,16 @@ namespace Bibliotheque.ViewModels
             string filtre = IsbnRecherche?.Trim() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(filtre))
             {
-                Message = "Veuillez entrer une partie de l'ISBN.";
+                Message = "Veuillez entrer l'ISBN au complet";
                 return;
             }
-
+            //978-3=9783
             string filtreNettoye = filtre.Replace("-", "").Replace(" ", "");
 
             var tousLesLivres = _xmlService.ChargerLivres();
 
             var trouves = tousLesLivres
+                //compparer isbn sans tiret ni espace
                 .Where(l =>
                 {
                     string isbnLivre = (l.ISBN ?? string.Empty)
