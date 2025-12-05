@@ -15,7 +15,6 @@
                    HorizontalTextAlignment="Center"
                    TextColor="{StaticResource Primary}"/>
 
-            <!-- Auteur -->
             <Label Text="{Binding Livre.Auteur}" 
                    FontSize="18"
                    HorizontalOptions="Center"
